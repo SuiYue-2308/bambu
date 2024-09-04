@@ -92,7 +92,7 @@ prepareAnnotationsFromGTF <- function(file) {
 #' @param exonsByTranscripts exonsByTranscripts
 #' @importFrom dplyr tibble
 #' @noRd
-getMinimumEqClassByTx <- function(exonsByTranscripts) {
+getMinimumEqClassByTx <- function(exonsByTranscripts, maxDist = 5) {
     exByTxAnnotated_singleBpStartEnd <-
         cutStartEndFromGrangesList(exonsByTranscripts)
     # estimate overlap only based on junctions
@@ -102,6 +102,8 @@ getMinimumEqClassByTx <- function(exonsByTranscripts) {
         )
     ## identify transcripts compatible with other (subsets by splice sites)
     spliceOverlaps <- spliceOverlaps[mcols(spliceOverlaps)$compatible == TRUE, ]
+	## remove compative entry if subset by splice sites but unique by at least 5bp on either end exons
+	spliceOverlaps <- updateSpliceOverlaps(spliceOverlaps,exonsByTranscripts, maxDist = maxDist)
     ## select splicing compatible transcript matches
     if(identical(mcols(exonsByTranscripts)$txid, seq_along(exonsByTranscripts))) {
         queryTxId <- queryHits(spliceOverlaps)
@@ -114,3 +116,28 @@ getMinimumEqClassByTx <- function(exonsByTranscripts) {
     return(DataFrame(queryTxId = names(exonsByTranscripts),  eqClassById=eqClassById))
 }
 
+
+#' Update spliceOverlaps to remove entries if subset by splice sites but unique 
+#' by at least 5bp on either end exons 
+#' 
+#' @param spliceOverlaps spliceOverlaps
+#' @param exonsByTranscripts exonsByTranscripts
+#' @importFrom dplyr tibble
+#' @noRd
+updateSpliceOverlaps <- function(spliceOverlaps,exonsByTranscripts, maxDist = 5){
+	## additional step to overwrite eqClassById if the subset transcript has unique sequences at start/end
+	## threshold used to define unique sequences is currently set as 5bp 
+    idx <- which(!(mcols(spliceOverlaps)$unique)&(queryHits(spliceOverlaps) != subjectHits(spliceOverlaps)))
+	
+    startEndDist <- findSpliceOverlapsByDist(exonsByTranscripts[queryHits(spliceOverlaps[idx])], 
+                   exonsByTranscripts[subjectHits(spliceOverlaps[idx])],
+                                              maxDist = maxDist, firstLastSeparate = TRUE,
+                                            dropRangesByMinLength = TRUE, cutStartEnd = TRUE,
+                                              ignore.strand = FALSE)
+    startEndDist  <- startEndDist[queryHits(startEndDist) == subjectHits(startEndDist)]
+	# at 5 bp unique on either start/end exon for the splice junction defined as subset transcript 
+	subsetWithUniqueSeq <- which((mcols(startEndDist)$uniqueStartLengthQuery > maxDist)|(mcols(startEndDist)$uniqueEndLengthQuery > maxDist))
+	idx_remove <- idx[subsetWithUniqueSeq]
+    if(length(idx_remove)) spliceOverlaps <- spliceOverlaps[-idx_remove]
+	return(spliceOverlaps)
+}
