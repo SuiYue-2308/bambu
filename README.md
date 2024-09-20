@@ -112,7 +112,7 @@ The bambuAnnotation object can be calculated from:
 
 a) a .gtf file:
 ```rscript
-annotations <- prepareAnnotation(gtf.file)
+annotations <- prepareAnnotations(gtf.file)
 ```
 b) a TxDb object
 ```rscript
