@@ -431,7 +431,7 @@ se <- bambu(reads = sample1.bam, annotations = annotations, genome = fa.file, op
 |reads|A string or a vector of strings specifying the paths of bam files for genomic alignments, or a BamFile object or a BamFileList object (from Rsamtools).|
 | rcOutDir | A string variable specifying the path to where read class files will be saved. |
 | annotations | A TxDb object, a path to a .gtf file, or a GRangesList object obtained by prepareAnnotations. |
-| genome | A fasta file or a BSGenome object. |
+| genome | A fasta file or a BSGenome object. If a fa.gz is provided, the .fai and .gzi must also be present |
 | stranded | A boolean for strandedness, defaults to FALSE. |
 | ncore | specifying number of cores used when parallel processing is used, defaults to 1. |
 | NDR | specifying the maximum NDR rate to novel transcript output among detected transcripts, defaults to 0.1 |
