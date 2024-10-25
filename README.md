@@ -34,6 +34,7 @@
   - [Training a model on another species/dataset and applying it](#Training-a-model-on-another-speciesdataset-and-applying-it)
   - [Quantification of gene expression](#Quantification-of-gene-expression)
   - [Including single exons](#Including-single-exons)
+  - [Fusion gene/isoform detection](#Fusion-geneisoform-detection)
   - [*bambu* Arguments](#Bambu-Arguments)
   - [Output Description](#Output-Description)
 - [Release History](#Release-History)
@@ -112,7 +113,7 @@ The bambuAnnotation object can be calculated from:
 
 a) a .gtf file:
 ```rscript
-annotations <- prepareAnnotation(gtf.file)
+annotations <- prepareAnnotations(gtf.file)
 ```
 b) a TxDb object
 ```rscript
@@ -424,6 +425,18 @@ By default *bambu* does not report single exon transcripts because they are know
 se <- bambu(reads = sample1.bam, annotations = annotations, genome = fa.file, opt.discovery = list(min.txScore.singleExon = 0))
 ```
 
+
+
+### Fusion gene/isoform detection
+
+To facilitate fusion gene/isoform detection, *bambu* has implemented a fusion mode. When it is set to TRUE, it will assign multiple GENEIDs to fusion transcripts, separated by ":". 
+
+To use this feature, it is recommended to detect the fusion gene breakpoints using fusion detection tools like [JAFFAL](https://github.com/Oshlack/JAFFA) first. Then fusion chromosome fasta file can be created by concatenating the two fusion gene sequences. Similarly, the fusion annotation gtf file can also be created with  coordinates of the transcripts from the relevant genes changed to fusion chromosome coordinates. It is then required to do the re-alignment of reads originating from fusion region to the generated fusion chromosome fasta file. Then users can apply *bambu* on the re-aligned bam files with fusion chromosome fasta and gtf files. 
+
+```rscript
+se <- bambu(reads = fusionAligned.bam, annotations = fusionAnnotations, genome = fusionFasta, fusionMode = TRUE)
+```
+
 ### *Bambu* Arguments
 
 |argument|description|
@@ -431,7 +444,7 @@ se <- bambu(reads = sample1.bam, annotations = annotations, genome = fa.file, op
 |reads|A string or a vector of strings specifying the paths of bam files for genomic alignments, or a BamFile object or a BamFileList object (from Rsamtools).|
 | rcOutDir | A string variable specifying the path to where read class files will be saved. |
 | annotations | A TxDb object, a path to a .gtf file, or a GRangesList object obtained by prepareAnnotations. |
-| genome | A fasta file or a BSGenome object. |
+| genome | A fasta file or a BSGenome object. If a fa.gz is provided, the .fai and .gzi must also be present |
 | stranded | A boolean for strandedness, defaults to FALSE. |
 | ncore | specifying number of cores used when parallel processing is used, defaults to 1. |
 | NDR | specifying the maximum NDR rate to novel transcript output among detected transcripts, defaults to 0.1 |

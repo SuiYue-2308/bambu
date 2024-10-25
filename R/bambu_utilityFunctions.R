@@ -170,7 +170,7 @@ checkInputSequence <- function(genomeSequence) {
     },
     error=function(cond) {
         stop("Input genome file not readable.",
-            "Requires a FASTA or BSgenome name")
+            " Requires a FASTA or BSgenome name")
     }
     )}
     return(genomeSequence)
