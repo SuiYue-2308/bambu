@@ -113,7 +113,7 @@ The bambuAnnotation object can be calculated from:
 
 a) a .gtf file:
 ```rscript
-annotations <- prepareAnnotation(gtf.file)
+annotations <- prepareAnnotations(gtf.file)
 ```
 b) a TxDb object
 ```rscript
@@ -444,7 +444,7 @@ se <- bambu(reads = fusionAligned.bam, annotations = fusionAnnotations, genome =
 |reads|A string or a vector of strings specifying the paths of bam files for genomic alignments, or a BamFile object or a BamFileList object (from Rsamtools).|
 | rcOutDir | A string variable specifying the path to where read class files will be saved. |
 | annotations | A TxDb object, a path to a .gtf file, or a GRangesList object obtained by prepareAnnotations. |
-| genome | A fasta file or a BSGenome object. |
+| genome | A fasta file or a BSGenome object. If a fa.gz is provided, the .fai and .gzi must also be present |
 | stranded | A boolean for strandedness, defaults to FALSE. |
 | ncore | specifying number of cores used when parallel processing is used, defaults to 1. |
 | NDR | specifying the maximum NDR rate to novel transcript output among detected transcripts, defaults to 0.1 |
@@ -498,7 +498,19 @@ rowData(se)
 
 ### Release History
 
-**bambu v3.2.6**
+**bambu v3.2.5**
+
+Release date: 2023-July-07
+
+Minor changes:
+
+- Fix crash when extremely large datasets provided
+- Speed up read class construction 
+- Add LongRead BiocView 
+- Update release history
+
+
+**bambu v3.2.4**
 
 Release date: 2023-Apr-26
 
@@ -592,7 +604,7 @@ Release date: 2020-06-18
 Release date: 2020-05-29 
 
 ### Citation
-Chen, Ying, et al. "Context-Aware Transcript Quantification from Long Read RNA-Seq data with Bambu" bioRxiv (2022). doi: https://doi.org/10.1101/2022.11.14.516358
+Chen, Y., Sim, A., Wan, Y.K. et al. Context-aware transcript quantification from long-read RNA-seq data with Bambu. Nat Methods (2023). https://doi.org/10.1038/s41592-023-01908-w
 
 ### Contributors
 
