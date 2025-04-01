@@ -146,7 +146,7 @@ filterTranscriptsByAnnotation <- function(rowDataCombined, annotationGrangesList
                  "txClassDescription","readCount","relReadCount", 
                  "relSubsetCount", "txid", "eqClassById", "maxTxScore", "maxTxScore.noFit")]
   metadata(extendedAnnotationRanges)$NDRthreshold = NDR
-  if (remove.subsetTx) metadata(extendedAnnotationRanges)$subsetTranscripts = subsetTranscripts
+  #if (remove.subsetTx) metadata(extendedAnnotationRanges)$subsetTranscripts = subsetTranscripts
   metadata(extendedAnnotationRanges)$lowConfidenceTranscripts = lowConfidenceTranscripts
   end.ptm <- proc.time()
   if (verbose) message("transcript filtering in ",
