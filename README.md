@@ -679,6 +679,7 @@ metadata(rowRanges(se))$warnings
 
 ### Release History
 
+<<<<<<< HEAD
 **bambu v3.9.0**
 
 Release date: 2025-xxx-xx
@@ -715,6 +716,17 @@ Minor changes:
 - Restore fusion mode functionality and added documentation
 - Fixed bug in plot function
 - Update release history
+=======
+**bambu v3.8.2**
+
+Release date: 2025-02-06
+
+Minor changes:
+
+- Fix large number of samples [issue](https://github.com/GoekeLab/bambu/issues/450)  
+- Fix denovo bug issue 
+
+>>>>>>> devel
 
 **bambu v3.2.5**
 
