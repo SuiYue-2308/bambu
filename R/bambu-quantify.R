@@ -41,7 +41,9 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
     
     # use the ground truth aval to perform EM 
     if (isTrue(manual_readClassDt)) {
-      readClassDt <- readRDS("../02_project/isoform_quant/em_analysis_A_mat/02_output/readClassDt_isodesign_flprop0.1_avaltruth.rds")
+      readClassDt <- readRDS(
+        "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/readClassDt_isodesign_flprop0.1_trueaval.rds"
+      )
     }
     
     start.ptm <- proc.time()
