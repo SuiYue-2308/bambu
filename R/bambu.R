@@ -135,7 +135,7 @@
 #' se <- bambu(reads = test.bam, annotations = gr, 
 #'     genome = fa.file,  discovery = TRUE, quant = TRUE)
 #' @export
-bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL,
+bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_readClassDt = NULL, 
     mode = NULL, opt.discovery = NULL, opt.em = NULL, rcOutDir = NULL, discovery = TRUE, 
     assignDist = TRUE, quant = TRUE, stranded = FALSE,  ncore = 1, yieldSize = NULL,  
     trackReads = FALSE, returnDistTable = FALSE, lowMemory = FALSE,
@@ -299,7 +299,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL,
                     countMatrix <- rowSums(countMatrix)
                     incompatibleCountMatrix <- rowSums(metadata(quantData_i)$incompatibleCountMatrix[,j]) # same here
                 }
-                return(bambu.quantify(readClassDt = metadata(quantData_i)$readClassDt, countMatrix = countMatrix, 
+                return(bambu.quantify(readClassDt = metadata(quantData_i)$readClassDt, manual_readClassDt = manual_readClassDt, countMatrix = countMatrix, 
                                             incompatibleCountMatrix = data.table(GENEID.i = as.numeric(rownames(metadata(quantData_i)$incompatibleCountMatrix)), counts = incompatibleCountMatrix),
                                             txid.index = mcols(annotations)$txid, GENEIDs = GENEIDs.i, isoreParameters = isoreParameters,
                                             emParameters = emParameters, trackReads = trackReads, 

@@ -2,13 +2,13 @@
 #' @inheritParams bambu
 #' @import data.table
 #' @noRd
-bambu.quantify <- function(readClassDt, countMatrix, incompatibleCountMatrix, txid.index, GENEIDs, emParameters, 
+bambu.quantify <- function(readClassDt, manual_readClassDt, countMatrix, incompatibleCountMatrix, txid.index, GENEIDs, emParameters, 
                            trackReads = FALSE, returnDistTable = FALSE,
                            verbose = FALSE, isoreParameters = setIsoreParameters(NULL)) {
     start.ptm <- proc.time()
     readClassDt$nobs = countMatrix[readClassDt$eqClass.match]
     readClassDt$nobs[is.na(readClassDt$nobs)] = 0
-    compatibleCounts <- bambu.quantDT(readClassDt, emParameters = emParameters,verbose = verbose)
+    compatibleCounts <- bambu.quantDT(readClassDt, manual_readClassDt, emParameters = emParameters,verbose = verbose)
     incompatibleCounts <- incompatibleCountMatrix[data.table(GENEID.i = GENEIDs), on = "GENEID.i"]
     incompatibleCounts[is.na(counts), counts := 0]
     compatibleCounts <- calculateCPM(compatibleCounts, incompatibleCounts)
@@ -28,7 +28,7 @@ bambu.quantify <- function(readClassDt, countMatrix, incompatibleCountMatrix, tx
 #' @param readClassDt A data.table object
 #' @inheritParams bambu
 #' @noRd
-bambu.quantDT <- function(readClassDt = readClassDt, 
+bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual_readClassDt, 
                           emParameters = list(degradationBias = TRUE, maxiter = 10000, conv = 10^(-2),
                                               minvalue = 10^(-8)), ncore = 1, verbose = FALSE) {
     rcPreOut <- addAval(readClassDt, emParameters, verbose)
@@ -38,6 +38,12 @@ bambu.quantDT <- function(readClassDt = readClassDt,
     readClassDt <- assignGroups(readClassDt)
     inputRcDt <- getInputList(readClassDt)
     readClassDt <- split(readClassDt, by = "gene_grp_id")
+    
+    # use the ground truth aval to perform EM 
+    if (isTrue(manual_readClassDt)) {
+      readClassDt <- readRDS("../02_project/isoform_quant/em_analysis_A_mat/02_output/readClassDt_isodesign_flprop0.1_avaltruth.rds")
+    }
+    
     start.ptm <- proc.time()
     outEst <- abundance_quantification(inputRcDt, readClassDt,
                                      maxiter = emParameters[["maxiter"]],
