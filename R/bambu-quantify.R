@@ -40,7 +40,7 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
     readClassDt <- split(readClassDt, by = "gene_grp_id")
     
     # use the ground truth aval to perform EM 
-    if (isTrue(manual_readClassDt)) {
+    if (isTRUE(manual_readClassDt)) {
       readClassDt <- readRDS(
         "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/readClassDt_isodesign_flprop0.1_trueaval.rds"
       )
