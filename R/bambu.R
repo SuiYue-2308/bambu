@@ -136,7 +136,7 @@
 #'     genome = fa.file,  discovery = TRUE, quant = TRUE)
 #' @export
 bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_readClassDt = NULL, 
-    mode = NULL, opt.discovery = NULL, opt.em = NULL, rcOutDir = NULL, discovery = TRUE, 
+    more_data_table = FALSE, mode = NULL, opt.discovery = NULL, opt.em = NULL, rcOutDir = NULL, discovery = TRUE, 
     assignDist = TRUE, quant = TRUE, stranded = FALSE,  ncore = 1, yieldSize = NULL,  
     trackReads = FALSE, returnDistTable = FALSE, lowMemory = FALSE,
     fusionMode = FALSE, verbose = FALSE, demultiplexed = FALSE, spatial = NULL, quantData = NULL,
@@ -210,6 +210,10 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                                 demultiplexed = demultiplexed,
                                                 sampleNames = sampleNames, cleanReads = cleanReads, 
                                                 dedupUMI = dedupUMI,barcodesToFilter = barcodesToFilter)
+            
+            if (isTRUE(more_data_table)) {
+              saveRDS(readClassList, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/read_class_list_isodesign_flprop0.1.rds")
+            }
         }
         
         #warnings = handleWarnings(readClassList, verbose)
@@ -243,6 +247,11 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                   returnDistTable = returnDistTable,
                                   trackReads = trackReads,
                                   BPPARAM = bpParameters)
+            
+            if (isTRUE(more_data_table)) {
+              saveRDS(quantData, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/quant_data_isodesign_flprop0.1.rds")
+            }
+            
             if (!quant) return(quantData)
         }
     }

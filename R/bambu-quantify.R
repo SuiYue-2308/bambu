@@ -33,6 +33,11 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
                                               minvalue = 10^(-8)), ncore = 1, verbose = FALSE) {
     rcPreOut <- addAval(readClassDt, emParameters, verbose)
     readClassDt <- rcPreOut[[1]]
+    
+    if (isTRUE(more_data_table)) {
+      saveRDS(readClassDt, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/read_class_dt_isodesign_flprop0.1.rds")
+    }
+    
     outIni <- initialiseOutput(readClassDt)
     readClassDt <- filterTxRc(readClassDt) 
     readClassDt <- assignGroups(readClassDt)
