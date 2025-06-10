@@ -8,7 +8,7 @@ bambu.quantify <- function(readClassDt, manual_readClassDt, more_data_table, cou
     start.ptm <- proc.time()
     readClassDt$nobs = countMatrix[readClassDt$eqClass.match]
     readClassDt$nobs[is.na(readClassDt$nobs)] = 0
-    compatibleCounts <- bambu.quantDT(readClassDt, manual_readClassDt, emParameters = emParameters,verbose = verbose)
+    compatibleCounts <- bambu.quantDT(readClassDt, manual_readClassDt, more_data_table, emParameters = emParameters,verbose = verbose)
     incompatibleCounts <- incompatibleCountMatrix[data.table(GENEID.i = GENEIDs), on = "GENEID.i"]
     incompatibleCounts[is.na(counts), counts := 0]
     compatibleCounts <- calculateCPM(compatibleCounts, incompatibleCounts)
