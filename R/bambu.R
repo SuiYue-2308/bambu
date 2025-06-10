@@ -308,12 +308,13 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                     countMatrix <- rowSums(countMatrix)
                     incompatibleCountMatrix <- rowSums(metadata(quantData_i)$incompatibleCountMatrix[,j]) # same here
                 }
-                return(bambu.quantify(readClassDt = metadata(quantData_i)$readClassDt, manual_readClassDt = manual_readClassDt, countMatrix = countMatrix, 
-                                            incompatibleCountMatrix = data.table(GENEID.i = as.numeric(rownames(metadata(quantData_i)$incompatibleCountMatrix)), counts = incompatibleCountMatrix),
-                                            txid.index = mcols(annotations)$txid, GENEIDs = GENEIDs.i, isoreParameters = isoreParameters,
-                                            emParameters = emParameters, trackReads = trackReads, 
-                                            verbose = verbose))}, 
-                                            BPPARAM = bpParameters)
+                return(bambu.quantify(readClassDt = metadata(quantData_i)$readClassDt, manual_readClassDt = manual_readClassDt, 
+                                      more_data_table = more_data_table, countMatrix = countMatrix, 
+                                      incompatibleCountMatrix = data.table(GENEID.i = as.numeric(rownames(metadata(quantData_i)$incompatibleCountMatrix)), counts = incompatibleCountMatrix),
+                                      txid.index = mcols(annotations)$txid, GENEIDs = GENEIDs.i, isoreParameters = isoreParameters,
+                                      emParameters = emParameters, trackReads = trackReads, 
+                                      verbose = verbose))}, 
+                                      BPPARAM = bpParameters)
             end.ptm <- proc.time()
             message("Total Time ", round((end.ptm - start.ptm)[3] / 60, 3), " mins.")
             if(!is.null(clusters)){

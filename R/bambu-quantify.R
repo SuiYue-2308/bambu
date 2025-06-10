@@ -2,7 +2,7 @@
 #' @inheritParams bambu
 #' @import data.table
 #' @noRd
-bambu.quantify <- function(readClassDt, manual_readClassDt, countMatrix, incompatibleCountMatrix, txid.index, GENEIDs, emParameters, 
+bambu.quantify <- function(readClassDt, manual_readClassDt, more_data_table, countMatrix, incompatibleCountMatrix, txid.index, GENEIDs, emParameters, 
                            trackReads = FALSE, returnDistTable = FALSE,
                            verbose = FALSE, isoreParameters = setIsoreParameters(NULL)) {
     start.ptm <- proc.time()
@@ -28,7 +28,7 @@ bambu.quantify <- function(readClassDt, manual_readClassDt, countMatrix, incompa
 #' @param readClassDt A data.table object
 #' @inheritParams bambu
 #' @noRd
-bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual_readClassDt, 
+bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual_readClassDt, more_data_table = more_data_table,
                           emParameters = list(degradationBias = TRUE, maxiter = 10000, conv = 10^(-2),
                                               minvalue = 10^(-8)), ncore = 1, verbose = FALSE) {
     rcPreOut <- addAval(readClassDt, emParameters, verbose)
