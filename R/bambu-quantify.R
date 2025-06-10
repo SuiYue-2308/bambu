@@ -38,18 +38,18 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
       saveRDS(readClassDt, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/read_class_dt_isodesign_flprop0.1.rds")
     }
     
-    outIni <- initialiseOutput(readClassDt)
-    readClassDt <- filterTxRc(readClassDt) 
-    readClassDt <- assignGroups(readClassDt)
-    inputRcDt <- getInputList(readClassDt)
-    readClassDt <- split(readClassDt, by = "gene_grp_id")
-    
     # use the ground truth aval to perform EM 
     if (isTRUE(manual_readClassDt)) {
       readClassDt <- readRDS(
         "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/readClassDt_isodesign_flprop0.1_trueaval.rds"
       )
     }
+    
+    outIni <- initialiseOutput(readClassDt)
+    readClassDt <- filterTxRc(readClassDt) 
+    readClassDt <- assignGroups(readClassDt)
+    inputRcDt <- getInputList(readClassDt)
+    readClassDt <- split(readClassDt, by = "gene_grp_id")
     
     start.ptm <- proc.time()
     outEst <- abundance_quantification(inputRcDt, readClassDt,
