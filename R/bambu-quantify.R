@@ -34,11 +34,6 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
     rcPreOut <- addAval(readClassDt, emParameters, verbose)
     readClassDt <- rcPreOut[[1]]
     
-    # use the ground truth aval to perform EM 
-    if (!is.null(manual_readClassDt)) {
-      readClassDt <- readRDS(manual_readClassDt)
-    }
-    
     outIni <- initialiseOutput(readClassDt)
     readClassDt <- filterTxRc(readClassDt) 
     readClassDt <- assignGroups(readClassDt)
@@ -46,6 +41,11 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
     
     if (isTRUE(more_data_table)) {
       saveRDS(readClassDt, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/read_class_dt_isodesign_flprop0.1.rds")
+    }
+    
+    # use the ground truth aval to perform EM 
+    if (!is.null(manual_readClassDt)) {
+      readClassDt <- readRDS(manual_readClassDt)
     }
     
     readClassDt <- split(readClassDt, by = "gene_grp_id")
