@@ -251,7 +251,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                   BPPARAM = bpParameters)
             
             if (is.character(more_data_table)) {
-              saveRDS(readClassList, 
+              saveRDS(quantData, 
                       file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
                                 paste0('quant_data_', more_data_table, ".rds")))
             }
