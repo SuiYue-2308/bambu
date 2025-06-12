@@ -200,7 +200,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                 rm.readClassSe <- TRUE # remove temporary read class files 
             }
             message("--- Start generating read class files ---")
-            readClassList <- bambu.processReads(reads, annotations, 
+            readClassList <- bambu.processReads(reads, annotations, more_data_table = more_data_table,
                                                 genomeSequence = genome, 
                                                 readClass.outputDir = rcOutDir, yieldSize = yieldSize, 
                                                 bpParameters = bpParameters, stranded = stranded, verbose = verbose,

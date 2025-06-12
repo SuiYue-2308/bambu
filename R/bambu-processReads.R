@@ -12,7 +12,7 @@
 #' @importFrom BiocParallel bplapply
 #' @importFrom BiocGenerics basename
 #' @noRd
-bambu.processReads <- function(reads, annotations, genomeSequence,
+bambu.processReads <- function(reads, annotations, genomeSequence, more_data_table
     readClass.outputDir=NULL, yieldSize=1000000, bpParameters, 
     stranded=FALSE, verbose=FALSE, isoreParameters = setIsoreParameters(NULL),
     processByChromosome = FALSE, processByBam = TRUE, trackReads = trackReads, fusionMode = fusionMode, 
@@ -92,6 +92,13 @@ bambu.processReads <- function(reads, annotations, genomeSequence,
         } else {
           mcols(readGrgList)$sampleID <- i
         }
+        
+        if (is.character(more_data_table)) {
+          saveRDS(readGrgList, 
+                  file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
+                            paste0('read_grg_list_', more_data_table, ".rds")))
+        }
+        
         readClassList <- constructReadClasses(readGrgList, genomeSequence = genomeSequence,annotations = annotations,
             stranded = stranded, min.readCount = min.readCount, 
             fitReadClassModel = fitReadClassModel, min.exonOverlap = min.exonOverlap, 
