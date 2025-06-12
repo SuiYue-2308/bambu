@@ -56,7 +56,7 @@ bambu.processReads <- function(reads, annotations, genomeSequence, more_data_tab
 
     if(processByBam){ # bulk mode
         readClassList <- bplapply(seq_along(reads), function(i) {
-            bambu.processReadsByFile(bam.file = reads[i],
+            bambu.processReadsByFile(bam.file = reads[i], more_data_table = more_data_table,
             genomeSequence = genomeSequence,annotations = annotations,
             stranded = stranded, min.readCount = min.readCount, 
             fitReadClassModel = fitReadClassModel, min.exonOverlap = min.exonOverlap, 
@@ -93,12 +93,6 @@ bambu.processReads <- function(reads, annotations, genomeSequence, more_data_tab
           mcols(readGrgList)$sampleID <- i
         }
         
-        if (is.character(more_data_table)) {
-          saveRDS(readGrgList, 
-                  file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output", 
-                            paste0('read_grg_list_', more_data_table, ".rds")))
-        }
-        
         readClassList <- constructReadClasses(readGrgList, genomeSequence = genomeSequence,annotations = annotations,
             stranded = stranded, min.readCount = min.readCount, 
             fitReadClassModel = fitReadClassModel, min.exonOverlap = min.exonOverlap, 
@@ -128,7 +122,7 @@ bambu.processReads <- function(reads, annotations, genomeSequence, more_data_tab
 #' @inheritParams bambu
 #' @importFrom GenomeInfoDb seqlevels seqlevels<- keepSeqlevels
 #' @noRd
-bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations,
+bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations, more_data_table = NULL, 
     yieldSize = NULL, stranded = FALSE, min.readCount = 2, 
     fitReadClassModel = TRUE, min.exonOverlap = 10, defaultModels = NULL, returnModel = FALSE, 
     verbose = FALSE, processByChromosome = FALSE, trackReads = FALSE, fusionMode = FALSE, demultiplexed = FALSE, 
@@ -226,7 +220,14 @@ bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations,
 
     metadata(se)$samples <- names(bam.file)[1]
     metadata(se)$sampleNames <- names(bam.file)[1]
-    if(!isFALSE(demultiplexed)) metadata(se)$samples <- levels(mcols(readGrgList)$BC)                         
+    if(!isFALSE(demultiplexed)) metadata(se)$samples <- levels(mcols(readGrgList)$BC)     
+    
+    if (is.character(more_data_table)) {
+      saveRDS(readGrgList, 
+              file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
+                        paste0('read_grg_list_', more_data_table, ".rds")))
+    }
+    
     return(se)
 }
 
