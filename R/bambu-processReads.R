@@ -222,7 +222,7 @@ bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations, more
     metadata(se)$sampleNames <- names(bam.file)[1]
     if(!isFALSE(demultiplexed)) metadata(se)$samples <- levels(mcols(readGrgList)$BC)     
     
-    if (is.character(more_data_table)) {
+    if (!is.null(more_data_table)) {
       saveRDS(readGrgList, 
               file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
                         paste0('read_grg_list_', more_data_table, ".rds")))

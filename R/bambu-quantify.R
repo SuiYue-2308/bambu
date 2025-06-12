@@ -39,7 +39,7 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
     readClassDt <- assignGroups(readClassDt)
     inputRcDt <- getInputList(readClassDt)
     
-    if (is.character(more_data_table)) {
+    if (!is.null(more_data_table)) {
       saveRDS(readClassDt, 
               file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
                         paste0('read_class_dt_', more_data_table, ".rds")))
