@@ -39,8 +39,10 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
     readClassDt <- assignGroups(readClassDt)
     inputRcDt <- getInputList(readClassDt)
     
-    if (isTRUE(more_data_table)) {
-      saveRDS(readClassDt, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/read_class_dt_isodesign_flprop0.1.rds")
+    if (is.character(more_data_table)) {
+      saveRDS(readClassList, 
+              file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
+                        paste0('read_class_dt_', more_data_table, ".rds")))
     }
     
     # use the ground truth aval to perform EM 

@@ -211,8 +211,10 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                                 sampleNames = sampleNames, cleanReads = cleanReads, 
                                                 dedupUMI = dedupUMI,barcodesToFilter = barcodesToFilter)
             
-            if (isTRUE(more_data_table)) {
-              saveRDS(readClassList, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/read_class_list_isodesign_flprop0.1.rds")
+            if (is.character(more_data_table)) {
+              saveRDS(readClassList, 
+                      file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
+                                paste0('read_class_list_', more_data_table, ".rds")))
             }
         }
         
@@ -248,8 +250,10 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                   trackReads = trackReads,
                                   BPPARAM = bpParameters)
             
-            if (isTRUE(more_data_table)) {
-              saveRDS(quantData, "/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/quant_data_isodesign_flprop0.1.rds")
+            if (is.character(more_data_table)) {
+              saveRDS(readClassList, 
+                      file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
+                                paste0('quant_data_', more_data_table, ".rds")))
             }
             
             if (!quant) return(quantData)
