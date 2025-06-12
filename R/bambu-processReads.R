@@ -95,7 +95,7 @@ bambu.processReads <- function(reads, annotations, genomeSequence, more_data_tab
         
         if (is.character(more_data_table)) {
           saveRDS(readGrgList, 
-                  file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
+                  file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output", 
                             paste0('read_grg_list_', more_data_table, ".rds")))
         }
         
