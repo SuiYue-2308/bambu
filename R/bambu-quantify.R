@@ -6,7 +6,7 @@ bambu.quantify <- function(readClassDt, manual_readClassDt, more_data_table, cou
                            trackReads = FALSE, returnDistTable = FALSE,
                            verbose = FALSE, isoreParameters = setIsoreParameters(NULL)) {
     start.ptm <- proc.time()
-    readClassDt$nobs = countMatrix[readClassDt$eqClass.match]
+    #readClassDt$nobs = countMatrix[readClassDt$eqClass.match]
     readClassDt$nobs[is.na(readClassDt$nobs)] = 0
     compatibleCounts <- bambu.quantDT(readClassDt, manual_readClassDt, more_data_table, emParameters = emParameters,verbose = verbose)
     incompatibleCounts <- incompatibleCountMatrix[data.table(GENEID.i = GENEIDs), on = "GENEID.i"]

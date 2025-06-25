@@ -71,13 +71,13 @@ genEquiRCsBasedOnObservedReads <- function(readClass){
                                                                                                                   annotationTxId, readCount, GENEID, dist,equal, compatible, txid)]
   distTable <- rcWidth[distTable, on = "readClassId"]
   # filter out multiple geneIDs mapped to the same readClass using rowData(se)
-  compatibleData <- as.data.table(as.data.frame(rowData(readClass)),
-                                  keep.rownames = TRUE)
-  setnames(compatibleData, old = c("rn", "geneId"),
-           new = c("readClassId", "GENEID"))
-  distTable <- distTable[compatibleData[ readClassId %in% 
-                                           unique(distTable$readClassId), .(readClassId, GENEID)],
-                         on = c("readClassId", "GENEID")]
+  # compatibleData <- as.data.table(as.data.frame(rowData(readClass)),
+  #                                 keep.rownames = TRUE)
+  # setnames(compatibleData, old = c("rn", "geneId"),
+  #          new = c("readClassId", "GENEID"))
+  # distTable <- distTable[compatibleData[ readClassId %in% 
+  #                                          unique(distTable$readClassId), .(readClassId, GENEID)],
+  #                        on = c("readClassId", "GENEID")]
   #here, each transcript should be assigned to one gene only based on isore.estimateDistanceToAnnotation function
   ##this step is very slow, consider to use integers instead of tx_ids
   eqClassByIdList <- createList(distTable$readClassId, distTable$txid*(-1)^distTable$equal)
@@ -102,7 +102,7 @@ createList <- function(query, subject){
 #' @noRd
 getUniCountPerEquiRC <- function(distTable){
   eqClassCount <- distTable %>% 
-    group_by(eqClassById) %>%
+    group_by(eqClassById, GENEID) %>%
     mutate(anyEqual = any(equal)) %>%
     select(eqClassById, firstExonWidth,totalWidth, readCount,GENEID,anyEqual) %>% #eqClassByIdTemp,
     distinct() %>%
@@ -121,7 +121,7 @@ getUniCountPerEquiRC <- function(distTable){
 #' @noRd
 addEmptyRC <- function(eqClassCount, annotations){
   minEquiRC <- processMinEquiRC(annotations)
-  eqClassCount <- createEqClassToTxMapping(eqClassCount)
+  eqClassCount <- createEqClassToTxMapping(eqClassCount, annotations)
   eqClassCountJoin <- full_join(eqClassCount, minEquiRC, by = c("eqClassById","GENEID","txid","equal"))
   eqClassCountJoin[is.na(eqClassCountJoin)] <- 0
   eqClassCount_final <- eqClassCountJoin %>% 
@@ -176,12 +176,16 @@ unAsIs <- function(X) {
 #' Create eqClass to tx mapping based on eqClassById
 #' @import tidyr 
 #' @noRd
-createEqClassToTxMapping <- function(eqClassTable){
+createEqClassToTxMapping <- function(eqClassTable, annotations){
   eqClassTable_unnest <- eqClassTable %>% 
     mutate(txid = eqClassById) %>% 
-    unnest(c(txid)) %>%
+    unnest(c(txid)) %>% 
     mutate(equal = ifelse(txid < 0,TRUE,FALSE)) %>%
-    mutate(txid = abs(txid))
+    mutate(txid = abs(txid)) %>% 
+    inner_join(
+      mcols(annotations) %>% as.data.table() %>% select(GENEID, txid), 
+      by = c("GENEID", "txid")
+    )
   return(eqClassTable_unnest)
 }
 
@@ -346,12 +350,32 @@ filterTxRc <- function(readClassDt){
 #' @noRd
 assignGroups <- function(readClassDt){
   # further devide genes into groups to improve process efficiency
-  readClassDt[, tr_dimension := length(unique(txid))*length(unique(eqClassId)), by = gene_sid]
-  trDimensionDt <- unique(readClassDt[,.(gene_sid, tr_dimension)])
-  trDimensionDt[order(tr_dimension), cumN := cumsum(tr_dimension)]
-  trDimensionDt[, gene_grp_id := cumN %/% 1000 + 1]
-  readClassDt <- trDimensionDt[readClassDt, on = c("gene_sid","tr_dimension")]
-  readClassDt[, `:=`(cumN = NULL, tr_dimension = NULL)]
+  # readClassDt[, tr_dimension := length(unique(txid))*length(unique(eqClassId)), by = gene_sid]
+  # trDimensionDt <- unique(readClassDt[,.(gene_sid, tr_dimension)])
+  # trDimensionDt[order(tr_dimension), cumN := cumsum(tr_dimension)]
+  # trDimensionDt[, gene_grp_id := cumN %/% 1000 + 1]
+  # readClassDt <- trDimensionDt[readClassDt, on = c("gene_sid","tr_dimension")]
+  # readClassDt[, `:=`(cumN = NULL, tr_dimension = NULL)]
+  library(igraph)
+  edges <- readClassDt %>% 
+    transmute(
+      from = paste0("G", gene_sid),
+      to   = paste0("E", eqClassId)
+    ) %>% 
+    distinct()
+  g <- graph_from_data_frame(edges, directed = FALSE)
+  comps <- components(g)$membership
+  gene_comps <- tibble(
+    node  = names(comps),
+    group = as.integer(comps)
+  ) %>%
+    filter(startsWith(node, "G")) %>%        # keep only the gene nodes
+    mutate(gene_sid = as.integer(sub("^G", "", node))) %>%
+    select(gene_sid, gene_grp_id = group)
+  readClassDt <- readClassDt %>%
+    left_join(gene_comps, by = "gene_sid") %>% 
+    relocate(gene_grp_id, .before = gene_sid)
+  
   return(readClassDt)
 }
 #' 
