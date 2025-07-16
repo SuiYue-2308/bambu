@@ -213,7 +213,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                                 junctionCorrection = junctionCorrection)
             
             if (!is.null(more_data_table)) {
-              saveRDS(readClassList, file.path(more_data_table, "read_class_list.rds")))
+              saveRDS(readClassList, file.path(more_data_table, "read_class_list.rds"))
             }
         }
         
