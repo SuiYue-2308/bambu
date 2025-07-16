@@ -213,9 +213,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                                 junctionCorrection = junctionCorrection)
             
             if (!is.null(more_data_table)) {
-              saveRDS(readClassList, 
-                      file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
-                                paste0('read_class_list_', more_data_table, ".rds")))
+              saveRDS(readClassList, file.path(more_data_table, "read_class_list.rds")))
             }
         }
         
@@ -252,9 +250,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                   BPPARAM = bpParameters)
             
             if (!is.null(more_data_table)) {
-              saveRDS(quantData, 
-                      file.path("/home/lingmh/Desktop/Project_V2/02_project/isoform_quant/em_analysis_A_mat/02_output/", 
-                                paste0('quant_data_', more_data_table, ".rds")))
+              saveRDS(quantData, file.path(more_data_table, "quant_data.rds"))
             }
             
             if (!quant) return(quantData)
