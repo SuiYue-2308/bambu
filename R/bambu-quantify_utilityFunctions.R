@@ -104,7 +104,7 @@ getUniCountPerEquiRC <- function(distTable){
   eqClassCount <- distTable %>% 
     group_by(eqClassById, GENEID) %>%
     mutate(anyEqual = any(equal)) %>%
-    select(eqClassById, firstExonWidth,totalWidth, readCount,GENEID,anyEqual) %>% #eqClassByIdTemp,
+    select(readClassId, eqClassById, firstExonWidth,totalWidth, readCount,GENEID,anyEqual) %>% #eqClassByIdTemp,
     distinct() %>%
     mutate(nobs = sum(readCount),
            rcWidth = ifelse(anyEqual, max(totalWidth), 
