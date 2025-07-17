@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // em_theta
-List em_theta(const arma::mat X, const arma::rowvec Y, const int maxiter, const double minvalue, const double conv);
-RcppExport SEXP _bambu_em_theta(SEXP XSEXP, SEXP YSEXP, SEXP maxiterSEXP, SEXP minvalueSEXP, SEXP convSEXP) {
+List em_theta(const arma::mat X, const arma::rowvec Y, const int maxiter, const double minvalue, const double conv, const arma::rowvec init);
+RcppExport SEXP _bambu_em_theta(SEXP XSEXP, SEXP YSEXP, SEXP maxiterSEXP, SEXP minvalueSEXP, SEXP convSEXP, SEXP initSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -22,13 +22,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const int >::type maxiter(maxiterSEXP);
     Rcpp::traits::input_parameter< const double >::type minvalue(minvalueSEXP);
     Rcpp::traits::input_parameter< const double >::type conv(convSEXP);
-    rcpp_result_gen = Rcpp::wrap(em_theta(X, Y, maxiter, minvalue, conv));
+    Rcpp::traits::input_parameter< const arma::rowvec >::type init(initSEXP);
+    rcpp_result_gen = Rcpp::wrap(em_theta(X, Y, maxiter, minvalue, conv, init));
     return rcpp_result_gen;
 END_RCPP
 }
 // emWithL1
-List emWithL1(const arma::mat A, const arma::mat A_full, const arma::mat A_unique, const arma::rowvec Y, const arma::rowvec K, const int maxiter, const double minvalue, const double conv);
-RcppExport SEXP _bambu_emWithL1(SEXP ASEXP, SEXP A_fullSEXP, SEXP A_uniqueSEXP, SEXP YSEXP, SEXP KSEXP, SEXP maxiterSEXP, SEXP minvalueSEXP, SEXP convSEXP) {
+List emWithL1(const arma::mat A, const arma::mat A_full, const arma::mat A_unique, const arma::rowvec Y, const arma::rowvec K, const int maxiter, const arma::rowvec init, const double minvalue, const double conv);
+RcppExport SEXP _bambu_emWithL1(SEXP ASEXP, SEXP A_fullSEXP, SEXP A_uniqueSEXP, SEXP YSEXP, SEXP KSEXP, SEXP maxiterSEXP, SEXP initSEXP, SEXP minvalueSEXP, SEXP convSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -38,16 +39,17 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::rowvec >::type Y(YSEXP);
     Rcpp::traits::input_parameter< const arma::rowvec >::type K(KSEXP);
     Rcpp::traits::input_parameter< const int >::type maxiter(maxiterSEXP);
+    Rcpp::traits::input_parameter< const arma::rowvec >::type init(initSEXP);
     Rcpp::traits::input_parameter< const double >::type minvalue(minvalueSEXP);
     Rcpp::traits::input_parameter< const double >::type conv(convSEXP);
-    rcpp_result_gen = Rcpp::wrap(emWithL1(A, A_full, A_unique, Y, K, maxiter, minvalue, conv));
+    rcpp_result_gen = Rcpp::wrap(emWithL1(A, A_full, A_unique, Y, K, maxiter, init, minvalue, conv));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_bambu_em_theta", (DL_FUNC) &_bambu_em_theta, 5},
-    {"_bambu_emWithL1", (DL_FUNC) &_bambu_emWithL1, 8},
+    {"_bambu_em_theta", (DL_FUNC) &_bambu_em_theta, 6},
+    {"_bambu_emWithL1", (DL_FUNC) &_bambu_emWithL1, 9},
     {NULL, NULL, 0}
 };
 

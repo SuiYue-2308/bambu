@@ -410,14 +410,16 @@ getInputList <- function(readClassDt){
 #' @importFrom BiocParallel bpparam bplapply
 #' @noRd
 abundance_quantification <- function(inputRcDt, readClassDt,
-                                     maxiter = 20000, conv = 10^(-2), minvalue = 10^(-8)) {
+                                     maxiter = 20000, conv = 10^(-2), minvalue = 10^(-8),
+                                     initMethod = "Const") {
         emResultsList <- lapply(as.list(names(inputRcDt)),
                                 run_parallel,
                                 conv = conv,
                                 minvalue = minvalue, 
                                 maxiter = maxiter,
                                 inputRcDt = inputRcDt,
-                                readClassDt = readClassDt
+                                readClassDt = readClassDt,
+                                initMethod = initMethod
         )
     estimates <- do.call("rbind", emResultsList)
     return(estimates)
@@ -431,7 +433,7 @@ abundance_quantification <- function(inputRcDt, readClassDt,
 #' @importFrom methods is
 #' @import data.table
 #' @noRd
-run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt) {
+run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt, initMethod) {
     input_g <- inputRcDt[[g]]  
     K <- input_g$K_list[[1]]
     n.obs <- input_g$nObs_list[[1]]
@@ -440,14 +442,22 @@ run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt) {
     total_mat <- getAMat(rcMat, by = "aval")
     full_mat <- getAMat(rcMat, by = "fullAval")
     unique_mat <- getAMat(rcMat, by = "uniqueAval")
-     if (is(total_mat,"numeric")&(nrow(total_mat)==1)) {
+    if (is(total_mat,"numeric")&(nrow(total_mat)==1)) {
         outEst <- cbind(sum(K * n.obs * total_mat),
                        sum(K * n.obs * full_mat),
                        sum(K * n.obs * unique_mat),
                        unname(txids))
     }else{
+        
+        if (initMethod == "Dir"){
+          init <- rexp(length(txids), rate = 1) # If X_k ~ Exp(1), then P_k = X_k / sum(X_l) ~ Dir(1,...1), every possible proportion vector is likely
+          init <- init / sum(init)
+        } else if (initMethod == "Const"){
+          init <- rep(1, length(txids))
+        }
+        
         est_output <- emWithL1(A = total_mat, A_full = full_mat, A_unique = unique_mat, Y = n.obs, K = K,
-                                maxiter = maxiter,
+                               maxiter = maxiter, init = init,
                                minvalue = minvalue, conv = conv)
         outEst <- cbind(t(est_output[["theta"]]),unname(txids))
     }
