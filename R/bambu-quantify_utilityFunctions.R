@@ -217,19 +217,19 @@ addAval <- function(readClassDt, emParameters, verbose){
   removeList <- removeUnObservedGenes(readClassDt)
   readClassDt <- removeList[[1]] # keep only observed genes for estimation
   outList <- removeList[[2]] #for unobserved genes, set estimates to 0 
-  readClassDt_withGeneCount <- select(readClassDt, gene_sid, eqClassId, nobs) %>%
-    unique() %>%
-    group_by(gene_sid) %>%
-    mutate(K = sum(nobs), n.obs=nobs/K, nobs = NULL) %>% ## check if this is unique by eqClassId
-    ungroup() %>%
-    distinct() %>%
-    right_join(readClassDt, by = c("gene_sid","eqClassId"))
+  # readClassDt_withGeneCount <- select(readClassDt, gene_sid, eqClassId, nobs) %>%
+  #   unique() %>%
+  #   group_by(gene_sid) %>%
+  #   mutate(K = sum(nobs), n.obs=nobs/K, nobs = NULL) %>% ## check if this is unique by eqClassId
+  #   ungroup() %>%
+  #   distinct() %>%
+  #   right_join(readClassDt, by = c("gene_sid","eqClassId"))
 #   readClassDt_withGeneCount <- readClassDt %>%
 #     group_by(gene_sid, eqClassId, nobs) %>% mutate(n = n(), n = replace(n,1,1)) %>%
 #     ungroup() %>% group_by(gene_sid) %>%
 #     mutate(K = sum(nobs), n.obs=(nobs)/(K)) %>%
 #     ungroup()
-  return(list(readClassDt_withGeneCount,outList))
+  return(list(readClassDt,outList))
 }
 
 #' This function converts transcript, gene, and read class names to simple
@@ -372,11 +372,20 @@ assignGroups <- function(readClassDt){
     filter(startsWith(node, "G")) %>%        # keep only the gene nodes
     mutate(gene_sid = as.integer(sub("^G", "", node))) %>%
     select(gene_sid, gene_grp_id = group)
-  readClassDt <- readClassDt %>%
-    left_join(gene_comps, by = "gene_sid") %>% 
-    relocate(gene_grp_id, .before = gene_sid)
+  readClassDt_withGeneGrp <- readClassDt %>% left_join(gene_comps, by = "gene_sid")
+  readClassDt_withGeneGrpCount <- readClassDt_withGeneGrp %>%
+    select(gene_grp_id, eqClassId, nobs) %>%
+    unique() %>%
+    group_by(gene_grp_id) %>%
+    mutate(K = sum(nobs), n.obs=nobs/K, nobs = NULL) %>%
+    ungroup() %>%
+    distinct() %>%
+    right_join(readClassDt_withGeneGrp, by = c("gene_grp_id", "eqClassId")) %>%
+    relocate(gene_grp_id, gene_sid, eqClassId, K, n.obs, .before = 1) %>%
+    arrange(gene_grp_id, gene_sid) %>%
+    data.table()
   
-  return(readClassDt)
+  return(readClassDt_withGeneGrpCount)
 }
 #' 
 #' @noRd
