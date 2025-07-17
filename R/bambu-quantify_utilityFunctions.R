@@ -381,7 +381,7 @@ assignGroups <- function(readClassDt){
 #' 
 #' @noRd
 getInputList <- function(readClassDt){
-  nObsVec <- unique(readClassDt[,.(gene_grp_id, gene_sid, eqClassId, K, n.obs)])[order(gene_grp_id, gene_sid, eqClassId)]
+  nObsVec <- unique(readClassDt[,.(gene_grp_id, eqClassId, K, n.obs)])[order(gene_grp_id, eqClassId)]
   nObsList <- splitAsList(nObsVec$n.obs,nObsVec$gene_grp_id)
   inputRcDt <- unique(readClassDt[,.(gene_grp_id)][order(gene_grp_id)])
   inputRcDt[, nObs_list := as.list(unname(nObsList))]
@@ -449,8 +449,8 @@ run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt) {
 #' Get the A matrix
 #' @noRd
 getAMat <- function(rcMat, by = "aval"){
-    a_mat <- dcast(rcMat, gene_sid + eqClassId ~ txid, value.var = by, fill = 0)
-    a_mat[, `:=`(gene_sid = NULL, eqClassId = NULL)]
+    a_mat <- dcast(rcMat, eqClassId ~ txid, value.var = by, fun.aggregate = sum, fill = 0)
+    a_mat[, `:=`(eqClassId = NULL)]
     return(t(as.matrix(a_mat)))
 }
 
