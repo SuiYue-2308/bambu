@@ -225,7 +225,7 @@ bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations, more
     metadata(se)$sampleNames <- names(bam.file)[1]
     if(!isFALSE(demultiplexed)) metadata(se)$samples <- levels(mcols(readGrgList)$BC)     
     
-    if (!is.null(more_data_table)) {
+    if (is.character(more_data_table)) {
       saveRDS(readGrgList, file.path(more_data_table, 'read_grg_list.rds')) 
     }
     

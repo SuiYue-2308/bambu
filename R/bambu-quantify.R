@@ -39,7 +39,7 @@ bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual
     readClassDt <- filterTxRc(readClassDt) 
     readClassDt <- assignGroups(readClassDt)
     
-    if (!is.null(more_data_table)) {
+    if (is.character(more_data_table)) {
       saveRDS(readClassDt, file.path(more_data_table, 'read_class_dt.rds'))
     }
     

@@ -212,7 +212,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                                 dedupUMI = dedupUMI,barcodesToFilter = barcodesToFilter, 
                                                 junctionCorrection = junctionCorrection)
             
-            if (!is.null(more_data_table)) {
+            if (is.character(more_data_table)) {
               saveRDS(readClassList, file.path(more_data_table, "read_class_list.rds"))
             }
         }
@@ -249,7 +249,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                   trackReads = trackReads,
                                   BPPARAM = bpParameters)
             
-            if (!is.null(more_data_table)) {
+            if (is.character(more_data_table)) {
               saveRDS(quantData, file.path(more_data_table, "quant_data.rds"))
             }
             
