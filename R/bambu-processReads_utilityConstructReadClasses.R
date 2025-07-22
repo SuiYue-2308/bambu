@@ -30,6 +30,7 @@ isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
             uniqueJunctions = uniqueJunctions,
             unlisted_junctions = unlisted_junctions,
             readGrgList = readGrgList,
+            annotations = annotations,
             stranded = stranded, 
             junctionCorrection = junctionCorrection)}
     else{exonsByRC.spliced = GRangesList()}
@@ -59,11 +60,8 @@ isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
 #' @importFrom GenomicRanges match
 #' @noRd
 constructSplicedReadClasses <- function(uniqueJunctions, unlisted_junctions, 
-<<<<<<< HEAD
-                                        readGrgList, annotations, stranded = FALSE) {
-=======
                                         readGrgList, stranded = FALSE, junctionCorrection = TRUE) {
->>>>>>> refs/rewritten/em-analysis-A-mat
+                                        readGrgList, annotations, stranded = FALSE, junctionCorrection = TRUE) {
     options(scipen = 999)
     allToUniqueJunctionMatch <- GenomicRanges::match(unlisted_junctions,
                                                      uniqueJunctions, ignore.strand = TRUE)
