@@ -71,13 +71,13 @@ genEquiRCsBasedOnObservedReads <- function(readClass){
                                                                                                                   annotationTxId, readCount, GENEID, dist,equal, compatible, txid)]
   distTable <- rcWidth[distTable, on = "readClassId"]
   # filter out multiple geneIDs mapped to the same readClass using rowData(se)
-  compatibleData <- as.data.table(as.data.frame(rowData(readClass)),
-                                  keep.rownames = TRUE)
-  setnames(compatibleData, old = c("rn", "geneId"),
-           new = c("readClassId", "GENEID"))
-  distTable <- distTable[compatibleData[ readClassId %in% 
-                                           unique(distTable$readClassId), .(readClassId, GENEID)],
-                         on = c("readClassId", "GENEID")]
+  # compatibleData <- as.data.table(as.data.frame(rowData(readClass)),
+  #                                 keep.rownames = TRUE)
+  # setnames(compatibleData, old = c("rn", "geneId"),
+  #          new = c("readClassId", "GENEID"))
+  # distTable <- distTable[compatibleData[ readClassId %in% 
+  #                                          unique(distTable$readClassId), .(readClassId, GENEID)],
+  #                        on = c("readClassId", "GENEID")]
   #here, each transcript should be assigned to one gene only based on isore.estimateDistanceToAnnotation function
   ##this step is very slow, consider to use integers instead of tx_ids
   eqClassByIdList <- createList(distTable$readClassId, distTable$txid*(-1)^distTable$equal)
@@ -102,9 +102,9 @@ createList <- function(query, subject){
 #' @noRd
 getUniCountPerEquiRC <- function(distTable){
   eqClassCount <- distTable %>% 
-    group_by(eqClassById) %>%
+    group_by(eqClassById, GENEID) %>%
     mutate(anyEqual = any(equal)) %>%
-    select(eqClassById, firstExonWidth,totalWidth, readCount,GENEID,anyEqual) %>% #eqClassByIdTemp,
+    select(readClassId, eqClassById, firstExonWidth,totalWidth, readCount,GENEID,anyEqual) %>% #eqClassByIdTemp,
     distinct() %>%
     mutate(nobs = sum(readCount),
            rcWidth = ifelse(anyEqual, max(totalWidth), 
@@ -121,7 +121,7 @@ getUniCountPerEquiRC <- function(distTable){
 #' @noRd
 addEmptyRC <- function(eqClassCount, annotations){
   minEquiRC <- processMinEquiRC(annotations)
-  eqClassCount <- createEqClassToTxMapping(eqClassCount)
+  eqClassCount <- createEqClassToTxMapping(eqClassCount, annotations)
   eqClassCountJoin <- full_join(eqClassCount, minEquiRC, by = c("eqClassById","GENEID","txid","equal"))
   eqClassCountJoin[is.na(eqClassCountJoin)] <- 0
   eqClassCount_final <- eqClassCountJoin %>% 
@@ -176,12 +176,16 @@ unAsIs <- function(X) {
 #' Create eqClass to tx mapping based on eqClassById
 #' @import tidyr 
 #' @noRd
-createEqClassToTxMapping <- function(eqClassTable){
+createEqClassToTxMapping <- function(eqClassTable, annotations){
   eqClassTable_unnest <- eqClassTable %>% 
     mutate(txid = eqClassById) %>% 
-    unnest(c(txid)) %>%
+    unnest(c(txid)) %>% 
     mutate(equal = ifelse(txid < 0,TRUE,FALSE)) %>%
-    mutate(txid = abs(txid))
+    mutate(txid = abs(txid)) %>% 
+    inner_join(
+      mcols(annotations) %>% as.data.table() %>% select(GENEID, txid), 
+      by = c("GENEID", "txid")
+    )
   return(eqClassTable_unnest)
 }
 
@@ -213,19 +217,19 @@ addAval <- function(readClassDt, emParameters, verbose){
   removeList <- removeUnObservedGenes(readClassDt)
   readClassDt <- removeList[[1]] # keep only observed genes for estimation
   outList <- removeList[[2]] #for unobserved genes, set estimates to 0 
-  readClassDt_withGeneCount <- select(readClassDt, gene_sid, eqClassId, nobs) %>%
-    unique() %>%
-    group_by(gene_sid) %>%
-    mutate(K = sum(nobs), n.obs=nobs/K, nobs = NULL) %>% ## check if this is unique by eqClassId
-    ungroup() %>%
-    distinct() %>%
-    right_join(readClassDt, by = c("gene_sid","eqClassId"))
+  # readClassDt_withGeneCount <- select(readClassDt, gene_sid, eqClassId, nobs) %>%
+  #   unique() %>%
+  #   group_by(gene_sid) %>%
+  #   mutate(K = sum(nobs), n.obs=nobs/K, nobs = NULL) %>% ## check if this is unique by eqClassId
+  #   ungroup() %>%
+  #   distinct() %>%
+  #   right_join(readClassDt, by = c("gene_sid","eqClassId"))
 #   readClassDt_withGeneCount <- readClassDt %>%
 #     group_by(gene_sid, eqClassId, nobs) %>% mutate(n = n(), n = replace(n,1,1)) %>%
 #     ungroup() %>% group_by(gene_sid) %>%
 #     mutate(K = sum(nobs), n.obs=(nobs)/(K)) %>%
 #     ungroup()
-  return(list(readClassDt_withGeneCount,outList))
+  return(list(readClassDt,outList))
 }
 
 #' This function converts transcript, gene, and read class names to simple
@@ -346,18 +350,47 @@ filterTxRc <- function(readClassDt){
 #' @noRd
 assignGroups <- function(readClassDt){
   # further devide genes into groups to improve process efficiency
-  readClassDt[, tr_dimension := length(unique(txid))*length(unique(eqClassId)), by = gene_sid]
-  trDimensionDt <- unique(readClassDt[,.(gene_sid, tr_dimension)])
-  trDimensionDt[order(tr_dimension), cumN := cumsum(tr_dimension)]
-  trDimensionDt[, gene_grp_id := cumN %/% 1000 + 1]
-  readClassDt <- trDimensionDt[readClassDt, on = c("gene_sid","tr_dimension")]
-  readClassDt[, `:=`(cumN = NULL, tr_dimension = NULL)]
-  return(readClassDt)
+  # readClassDt[, tr_dimension := length(unique(txid))*length(unique(eqClassId)), by = gene_sid]
+  # trDimensionDt <- unique(readClassDt[,.(gene_sid, tr_dimension)])
+  # trDimensionDt[order(tr_dimension), cumN := cumsum(tr_dimension)]
+  # trDimensionDt[, gene_grp_id := cumN %/% 1000 + 1]
+  # readClassDt <- trDimensionDt[readClassDt, on = c("gene_sid","tr_dimension")]
+  # readClassDt[, `:=`(cumN = NULL, tr_dimension = NULL)]
+  library(igraph)
+  edges <- readClassDt %>% 
+    transmute(
+      from = paste0("G", gene_sid),
+      to   = paste0("E", eqClassId)
+    ) %>% 
+    distinct()
+  g <- graph_from_data_frame(edges, directed = FALSE)
+  comps <- components(g)$membership
+  gene_comps <- tibble(
+    node  = names(comps),
+    group = as.integer(comps)
+  ) %>%
+    filter(startsWith(node, "G")) %>%        # keep only the gene nodes
+    mutate(gene_sid = as.integer(sub("^G", "", node))) %>%
+    select(gene_sid, gene_grp_id = group)
+  readClassDt_withGeneGrp <- readClassDt %>% left_join(gene_comps, by = "gene_sid")
+  readClassDt_withGeneGrpCount <- readClassDt_withGeneGrp %>%
+    select(gene_grp_id, eqClassId, nobs) %>%
+    unique() %>%
+    group_by(gene_grp_id) %>%
+    mutate(K = sum(nobs), n.obs=nobs/K, nobs = NULL) %>%
+    ungroup() %>%
+    distinct() %>%
+    right_join(readClassDt_withGeneGrp, by = c("gene_grp_id", "eqClassId")) %>%
+    relocate(gene_grp_id, gene_sid, eqClassId, K, n.obs, .before = 1) %>%
+    arrange(gene_grp_id, gene_sid) %>%
+    data.table()
+  
+  return(readClassDt_withGeneGrpCount)
 }
 #' 
 #' @noRd
 getInputList <- function(readClassDt){
-  nObsVec <- unique(readClassDt[,.(gene_grp_id, gene_sid, eqClassId, K, n.obs)])[order(gene_grp_id, gene_sid, eqClassId)]
+  nObsVec <- unique(readClassDt[,.(gene_grp_id, eqClassId, K, n.obs)])[order(gene_grp_id, eqClassId)]
   nObsList <- splitAsList(nObsVec$n.obs,nObsVec$gene_grp_id)
   inputRcDt <- unique(readClassDt[,.(gene_grp_id)][order(gene_grp_id)])
   inputRcDt[, nObs_list := as.list(unname(nObsList))]
@@ -377,14 +410,16 @@ getInputList <- function(readClassDt){
 #' @importFrom BiocParallel bpparam bplapply
 #' @noRd
 abundance_quantification <- function(inputRcDt, readClassDt,
-                                     maxiter = 20000, conv = 10^(-2), minvalue = 10^(-8)) {
+                                     maxiter = 20000, conv = 10^(-2), minvalue = 10^(-8),
+                                     initMethod = "Const") {
         emResultsList <- lapply(as.list(names(inputRcDt)),
                                 run_parallel,
                                 conv = conv,
                                 minvalue = minvalue, 
                                 maxiter = maxiter,
                                 inputRcDt = inputRcDt,
-                                readClassDt = readClassDt
+                                readClassDt = readClassDt,
+                                initMethod = initMethod
         )
     estimates <- do.call("rbind", emResultsList)
     return(estimates)
@@ -398,7 +433,7 @@ abundance_quantification <- function(inputRcDt, readClassDt,
 #' @importFrom methods is
 #' @import data.table
 #' @noRd
-run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt) {
+run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt, initMethod) {
     input_g <- inputRcDt[[g]]  
     K <- input_g$K_list[[1]]
     n.obs <- input_g$nObs_list[[1]]
@@ -407,14 +442,22 @@ run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt) {
     total_mat <- getAMat(rcMat, by = "aval")
     full_mat <- getAMat(rcMat, by = "fullAval")
     unique_mat <- getAMat(rcMat, by = "uniqueAval")
-     if (is(total_mat,"numeric")&(nrow(total_mat)==1)) {
+    if (is(total_mat,"numeric")&(nrow(total_mat)==1)) {
         outEst <- cbind(sum(K * n.obs * total_mat),
                        sum(K * n.obs * full_mat),
                        sum(K * n.obs * unique_mat),
                        unname(txids))
     }else{
+        
+        if (initMethod == "Dir"){
+          init <- rexp(length(txids), rate = 1) # If X_k ~ Exp(1), then P_k = X_k / sum(X_l) ~ Dir(1,...1), every possible proportion vector is likely
+          init <- init / sum(init)
+        } else if (initMethod == "Const"){
+          init <- rep(1, length(txids))
+        }
+        
         est_output <- emWithL1(A = total_mat, A_full = full_mat, A_unique = unique_mat, Y = n.obs, K = K,
-                                maxiter = maxiter,
+                               maxiter = maxiter, init = init,
                                minvalue = minvalue, conv = conv)
         outEst <- cbind(t(est_output[["theta"]]),unname(txids))
     }
@@ -425,8 +468,8 @@ run_parallel <- function(g, conv, minvalue, maxiter, inputRcDt, readClassDt) {
 #' Get the A matrix
 #' @noRd
 getAMat <- function(rcMat, by = "aval"){
-    a_mat <- dcast(rcMat, gene_sid + eqClassId ~ txid, value.var = by, fill = 0)
-    a_mat[, `:=`(gene_sid = NULL, eqClassId = NULL)]
+    a_mat <- dcast(rcMat, eqClassId ~ txid, value.var = by, fun.aggregate = sum, fill = 0)
+    a_mat[, `:=`(eqClassId = NULL)]
     return(t(as.matrix(a_mat)))
 }
 

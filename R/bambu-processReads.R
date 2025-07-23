@@ -12,11 +12,12 @@
 #' @importFrom BiocParallel bplapply
 #' @importFrom BiocGenerics basename
 #' @noRd
-bambu.processReads <- function(reads, annotations, genomeSequence,
+bambu.processReads <- function(reads, annotations, genomeSequence, more_data_table,
     readClass.outputDir=NULL, yieldSize=1000000, bpParameters, 
     stranded=FALSE, verbose=FALSE, isoreParameters = setIsoreParameters(NULL),
     processByChromosome = FALSE, processByBam = TRUE, trackReads = trackReads, fusionMode = fusionMode, 
-    demultiplexed = FALSE, cleanReads = FALSE, dedupUMI = FALSE, sampleNames = NULL, barcodesToFilter = NULL) {
+    demultiplexed = FALSE, cleanReads = FALSE, dedupUMI = FALSE, 
+    sampleNames = NULL, barcodesToFilter = NULL, junctionCorrection = TRUE) {
     genomeSequence <- checkInputSequence(genomeSequence)
     # ===# create BamFileList object from character #===#
     if (is(reads, "BamFile")) {
@@ -56,13 +57,14 @@ bambu.processReads <- function(reads, annotations, genomeSequence,
 
     if(processByBam){ # bulk mode
         readClassList <- bplapply(seq_along(reads), function(i) {
-            bambu.processReadsByFile(bam.file = reads[i],
+            bambu.processReadsByFile(bam.file = reads[i], more_data_table = more_data_table,
             genomeSequence = genomeSequence,annotations = annotations,
             stranded = stranded, min.readCount = min.readCount, 
             fitReadClassModel = fitReadClassModel, min.exonOverlap = min.exonOverlap, 
             defaultModels = defaultModels, returnModel = returnModel, verbose = verbose, 
             processByChromosome = processByChromosome, trackReads = trackReads, fusionMode = fusionMode, 
-            demultiplexed = demultiplexed, cleanReads = cleanReads, dedupUMI = dedupUMI, index = 1, barcodesToFilter = barcodesToFilter)},
+            demultiplexed = demultiplexed, cleanReads = cleanReads, 
+            dedupUMI = dedupUMI, index = 1, barcodesToFilter = barcodesToFilter, junctionCorrection = junctionCorrection)},
             BPPARAM = bpParameters)
     } else { # single cell mode 
         readGrgList <- bplapply(seq_along(reads), function(i) {
@@ -92,11 +94,13 @@ bambu.processReads <- function(reads, annotations, genomeSequence,
         } else {
           mcols(readGrgList)$sampleID <- i
         }
+        
         readClassList <- constructReadClasses(readGrgList, genomeSequence = genomeSequence,annotations = annotations,
             stranded = stranded, min.readCount = min.readCount, 
             fitReadClassModel = fitReadClassModel, min.exonOverlap = min.exonOverlap, 
             defaultModels = defaultModels, returnModel = returnModel, verbose = verbose, 
-            processByChromosome = processByChromosome, trackReads = trackReads, fusionMode = fusionMode)
+            processByChromosome = processByChromosome, trackReads = trackReads, fusionMode = fusionMode,
+            junctionCorrection = junctionCorrection)
         metadata(readClassList)$samples <- names(reads)
         metadata(readClassList)$sampleNames <- names(reads)
         if(!isFALSE(demultiplexed)) metadata(readClassList)$samples <- levels(mcols(readGrgList)$BC)
@@ -121,11 +125,11 @@ bambu.processReads <- function(reads, annotations, genomeSequence,
 #' @inheritParams bambu
 #' @importFrom GenomeInfoDb seqlevels seqlevels<- keepSeqlevels
 #' @noRd
-bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations,
+bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations, more_data_table = NULL, 
     yieldSize = NULL, stranded = FALSE, min.readCount = 2, 
     fitReadClassModel = TRUE, min.exonOverlap = 10, defaultModels = NULL, returnModel = FALSE, 
     verbose = FALSE, processByChromosome = FALSE, trackReads = FALSE, fusionMode = FALSE, demultiplexed = FALSE, 
-    cleanReads = FALSE, dedupUMI = FALSE, index = 0, barcodesToFilter = NULL) {
+    cleanReads = FALSE, dedupUMI = FALSE, index = 0, barcodesToFilter = NULL, junctionCorrection = TRUE) {
     if(verbose) message(names(bam.file)[1])
     readGrgList <- prepareDataFromBam(bam.file[[1]], verbose = verbose, yieldSize = yieldSize, use.names = trackReads, demultiplexed = demultiplexed, cleanReads = cleanReads, dedupUMI = dedupUMI)
     if(verbose) message(paste0("Number of alignments/reads: ",length(readGrgList)))
@@ -188,15 +192,15 @@ bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations,
         
     # construct read classes for each chromosome seperately 
     if(processByChromosome){
-        se <- lowMemoryConstructReadClasses(readGrgList, genomeSequence, 
-                                                      annotations, stranded, verbose,bam.file)
+        se <- lowMemoryConstructReadClasses(readGrgList, genomeSequence, annotations, 
+                                            stranded, verbose, bam.file, junctionCorrection)
     } else{
         unlisted_junctions <- unlistIntrons(readGrgList, use.ids = TRUE)
         uniqueJunctions <- isore.constructJunctionTables(unlisted_junctions, 
                                                          annotations,genomeSequence, stranded = stranded, verbose = verbose)
         se <- isore.constructReadClasses(readGrgList, 
                                               unlisted_junctions, uniqueJunctions, runName = "TODO",
-                                              annotations, stranded, verbose)
+                                              annotations, stranded, verbose, junctionCorrection)
 
     }
 
@@ -219,7 +223,12 @@ bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations,
 
     metadata(se)$samples <- names(bam.file)[1]
     metadata(se)$sampleNames <- names(bam.file)[1]
-    if(!isFALSE(demultiplexed)) metadata(se)$samples <- levels(mcols(readGrgList)$BC)                         
+    if(!isFALSE(demultiplexed)) metadata(se)$samples <- levels(mcols(readGrgList)$BC)     
+    
+    if (is.character(more_data_table)) {
+      saveRDS(readGrgList, file.path(more_data_table, 'read_grg_list.rds')) 
+    }
+    
     return(se)
 }
 
@@ -306,20 +315,20 @@ bambu.readsByFile <- function(bam.file, genomeSequence, annotations,
 constructReadClasses <- function(readGrgList, genomeSequence, annotations,
     stranded = FALSE, min.readCount = 2, 
     fitReadClassModel = TRUE, min.exonOverlap = 10, defaultModels = NULL, returnModel = FALSE, 
-    verbose = FALSE, processByChromosome = FALSE, trackReads = FALSE, fusionMode = FALSE){
+    verbose = FALSE, processByChromosome = FALSE, trackReads = FALSE, fusionMode = FALSE, junctionCorrection = TRUE){
     warnings <- c() ###TODO
     
     if(processByChromosome){
         # construct read classes for each chromosome seperately 
         se <- lowMemoryConstructReadClasses(readGrgList, genomeSequence, 
-                                            annotations, stranded, verbose,"TODO", fusionMode)
+                                            annotations, stranded, verbose,"TODO", fusionMode, junctionCorrection)
     } else{
         unlisted_junctions <- unlistIntrons(readGrgList, use.ids = TRUE)
         uniqueJunctions <- isore.constructJunctionTables(unlisted_junctions, 
                                                          annotations,genomeSequence, stranded = stranded, verbose = verbose)
         se <- isore.constructReadClasses(readGrgList, 
                                               unlisted_junctions, uniqueJunctions, runName = "TODO",
-                                              annotations, stranded, verbose)
+                                              annotations, stranded, verbose, junctionCorrection)
 
     }
     metadata(se)$warnings <- warnings
@@ -346,7 +355,8 @@ constructReadClasses <- function(readGrgList, genomeSequence, annotations,
 #' Low memory mode for construct read classes (processByChromosome)
 #' @noRd
 lowMemoryConstructReadClasses <- function(readGrgList, genomeSequence, 
-                                          annotations, stranded, verbose,bam.file, fusionMode = FALSE){
+                                          annotations, stranded, verbose,bam.file, fusionMode = FALSE,
+                                          junctionCorrection = TRUE){
     if(fusionMode){
         readGrgList <- list(readGrgList)
         names(readGrgList) <- c("fusion")
@@ -361,7 +371,7 @@ lowMemoryConstructReadClasses <- function(readGrgList, genomeSequence,
                                                          annotations,genomeSequence, stranded = stranded, verbose = verbose)
         se.temp <- isore.constructReadClasses(readGrgList[[i]], 
                                               unlisted_junctions, uniqueJunctions, runName = "TODO",
-                                              annotations, stranded, verbose)
+                                              annotations, stranded, verbose, junctionCorrection)
         return(se.temp)
     })
     se <- se[!sapply(se, FUN = is.null)]

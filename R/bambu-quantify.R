@@ -2,13 +2,13 @@
 #' @inheritParams bambu
 #' @import data.table
 #' @noRd
-bambu.quantify <- function(readClassDt, countMatrix, incompatibleCountMatrix, txid.index, GENEIDs, emParameters, 
+bambu.quantify <- function(readClassDt, manual_readClassDt, more_data_table, countMatrix, incompatibleCountMatrix, txid.index, GENEIDs, emParameters, 
                            trackReads = FALSE, returnDistTable = FALSE,
                            verbose = FALSE, isoreParameters = setIsoreParameters(NULL)) {
     start.ptm <- proc.time()
-    readClassDt$nobs = countMatrix[readClassDt$eqClass.match]
+    #readClassDt$nobs = countMatrix[readClassDt$eqClass.match]
     readClassDt$nobs[is.na(readClassDt$nobs)] = 0
-    compatibleCounts <- bambu.quantDT(readClassDt, emParameters = emParameters,verbose = verbose)
+    compatibleCounts <- bambu.quantDT(readClassDt, manual_readClassDt, more_data_table, emParameters = emParameters,verbose = verbose)
     incompatibleCounts <- incompatibleCountMatrix[data.table(GENEID.i = GENEIDs), on = "GENEID.i"]
     incompatibleCounts[is.na(counts), counts := 0]
     compatibleCounts <- calculateCPM(compatibleCounts, incompatibleCounts)
@@ -28,20 +28,33 @@ bambu.quantify <- function(readClassDt, countMatrix, incompatibleCountMatrix, tx
 #' @param readClassDt A data.table object
 #' @inheritParams bambu
 #' @noRd
-bambu.quantDT <- function(readClassDt = readClassDt, 
+bambu.quantDT <- function(readClassDt = readClassDt, manual_readClassDt = manual_readClassDt, more_data_table = more_data_table,
                           emParameters = list(degradationBias = TRUE, maxiter = 10000, conv = 10^(-2),
-                                              minvalue = 10^(-8)), ncore = 1, verbose = FALSE) {
+                                              minvalue = 10^(-8), initMethod = "Const"), ncore = 1, verbose = FALSE) {
+  
     rcPreOut <- addAval(readClassDt, emParameters, verbose)
     readClassDt <- rcPreOut[[1]]
+    
     outIni <- initialiseOutput(readClassDt)
     readClassDt <- filterTxRc(readClassDt) 
     readClassDt <- assignGroups(readClassDt)
+    
+    if (is.character(more_data_table)) {
+      saveRDS(readClassDt, file.path(more_data_table, 'read_class_dt.rds'))
+    }
+    
+    if (!is.null(manual_readClassDt)){ # use ground truth aval to perform EM
+      readClassDt <- readRDS(manual_readClassDt)
+    }
+    
     inputRcDt <- getInputList(readClassDt)
     readClassDt <- split(readClassDt, by = "gene_grp_id")
+      
     start.ptm <- proc.time()
     outEst <- abundance_quantification(inputRcDt, readClassDt,
                                      maxiter = emParameters[["maxiter"]],
-                                     conv = emParameters[["conv"]], minvalue = emParameters[["minvalue"]])
+                                     conv = emParameters[["conv"]], minvalue = emParameters[["minvalue"]],
+                                     initMethod = emParameters[["initMethod"]])
     end.ptm <- proc.time()
     # if (verbose) message("Finished EM estimation in ",
     #                     round((end.ptm - start.ptm)[3] / 60, 1), " mins.")

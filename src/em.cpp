@@ -10,14 +10,15 @@ List em_theta (const arma::mat X, // sampling probability matrix, (i,j) = 1 if r
                const arma::rowvec Y, // observed number of reads for each read class j
                const int maxiter,
                const double minvalue,
-               const double conv // , const int nThr = 1
+               const double conv, // const int nThr = 1
+               const arma::rowvec init
 
 ) {
   int M = X.n_rows; //number of isoforms
   // omp_set_num_threads(nThr) ; // using multiple threads
 
   // containers
-  arma::rowvec theta(M) ; // define theta
+  arma::rowvec theta = init;
   theta.fill(1) ;
 
   arma::mat theta_trace(M,maxiter);
@@ -80,6 +81,7 @@ List emWithL1 (const arma::mat A, // alignment compatibility matrix for all
                const arma::rowvec Y, // observed number of reads for each read class j
                const arma::rowvec K, // K total count, of the same length as Y
                const int maxiter,
+               const arma::rowvec init,
                const double minvalue,
                const double conv  // , const int nThr = 1
 ){
@@ -90,7 +92,7 @@ List emWithL1 (const arma::mat A, // alignment compatibility matrix for all
   List theta_out(3); // create a empty list of size 3
   arma::rowvec theta(M);
   
-  theta_out = em_theta(A, Y, maxiter, minvalue, conv) ; //lambda,
+  theta_out = em_theta(A, Y, maxiter, minvalue, conv, init) ; //lambda,
   theta = Rcpp::as<arma::rowvec>(theta_out[0]) ;
 
   // post-process outputs

@@ -10,7 +10,8 @@
 #' @noRd
 isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
                                        uniqueJunctions, runName = "sample1",
-                                       annotations, stranded = FALSE, verbose = FALSE) {
+                                       annotations, stranded = FALSE, verbose = FALSE, 
+                                       junctionCorrection = TRUE) {
     #split reads into single exon and multi exon reads
     reads.singleExon <- unlist(readGrgList[elementNROWS(readGrgList) == 1],
                                use.names = FALSE)
@@ -29,7 +30,8 @@ isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
             uniqueJunctions = uniqueJunctions,
             unlisted_junctions = unlisted_junctions,
             readGrgList = readGrgList,
-            stranded = stranded, annotations)}
+            stranded = stranded, 
+            junctionCorrection = junctionCorrection)}
     else{exonsByRC.spliced = GRangesList()}
     end.ptm <- proc.time()
     rm(readGrgList, unlisted_junctions, uniqueJunctions)
@@ -57,16 +59,23 @@ isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
 #' @importFrom GenomicRanges match
 #' @noRd
 constructSplicedReadClasses <- function(uniqueJunctions, unlisted_junctions, 
+<<<<<<< HEAD
                                         readGrgList, annotations, stranded = FALSE) {
+=======
+                                        readGrgList, stranded = FALSE, junctionCorrection = TRUE) {
+>>>>>>> refs/rewritten/em-analysis-A-mat
     options(scipen = 999)
     allToUniqueJunctionMatch <- GenomicRanges::match(unlisted_junctions,
                                                      uniqueJunctions, ignore.strand = TRUE)
-    correctedJunctionMatches <- 
+    if (isTRUE(junctionCorrection)){
+      correctedJunctionMatches <- 
         base::match(uniqueJunctions$mergedHighConfJunctionIdAll_noNA[
-            allToUniqueJunctionMatch], names(uniqueJunctions))
-    unlisted_junctions <- correctIntronRanges(unlisted_junctions, 
-        uniqueJunctions, correctedJunctionMatches)
-    rm(correctedJunctionMatches)
+          allToUniqueJunctionMatch], names(uniqueJunctions))
+      unlisted_junctions <- correctIntronRanges(unlisted_junctions, 
+                                                uniqueJunctions, correctedJunctionMatches)
+      rm(correctedJunctionMatches)
+    }
+    
     if(any(mcols(unlisted_junctions)$remove)){  # remove microexons
         toRemove = which(mcols(unlisted_junctions)$remove)
         unlisted_junctions = unlisted_junctions[-toRemove]

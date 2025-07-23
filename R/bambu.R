@@ -135,13 +135,13 @@
 #' se <- bambu(reads = test.bam, annotations = gr, 
 #'     genome = fa.file,  discovery = TRUE, quant = TRUE)
 #' @export
-bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL,
-    mode = NULL, opt.discovery = NULL, opt.em = NULL, rcOutDir = NULL, discovery = TRUE, 
+bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_readClassDt = NULL, 
+    more_data_table = FALSE, mode = NULL, opt.discovery = NULL, opt.em = NULL, rcOutDir = NULL, discovery = TRUE, 
     assignDist = TRUE, quant = TRUE, stranded = FALSE,  ncore = 1, yieldSize = NULL,  
     trackReads = FALSE, returnDistTable = FALSE, lowMemory = FALSE,
     fusionMode = FALSE, verbose = FALSE, demultiplexed = FALSE, spatial = NULL, quantData = NULL,
     sampleNames = NULL, cleanReads = FALSE, dedupUMI = FALSE, barcodesToFilter = NULL, clusters = NULL,
-    processByChromosome = FALSE, processByBam = TRUE) {
+    processByChromosome = FALSE, processByBam = TRUE, junctionCorrection = TRUE) {
     message(paste0("Running Bambu-v", "3.9.0"))
     if(!is.null(mode)){
         if(mode == "bulk"){
@@ -200,7 +200,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL,
                 rm.readClassSe <- TRUE # remove temporary read class files 
             }
             message("--- Start generating read class files ---")
-            readClassList <- bambu.processReads(reads, annotations, 
+            readClassList <- bambu.processReads(reads, annotations, more_data_table = more_data_table,
                                                 genomeSequence = genome, 
                                                 readClass.outputDir = rcOutDir, yieldSize = yieldSize, 
                                                 bpParameters = bpParameters, stranded = stranded, verbose = verbose,
@@ -209,7 +209,12 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL,
                                                 processByChromosome = processByChromosome, processByBam = processByBam, 
                                                 demultiplexed = demultiplexed,
                                                 sampleNames = sampleNames, cleanReads = cleanReads, 
-                                                dedupUMI = dedupUMI,barcodesToFilter = barcodesToFilter)
+                                                dedupUMI = dedupUMI,barcodesToFilter = barcodesToFilter, 
+                                                junctionCorrection = junctionCorrection)
+            
+            if (is.character(more_data_table)) {
+              saveRDS(readClassList, file.path(more_data_table, "read_class_list.rds"))
+            }
         }
         
         #warnings = handleWarnings(readClassList, verbose)
@@ -243,6 +248,11 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL,
                                   returnDistTable = returnDistTable,
                                   trackReads = trackReads,
                                   BPPARAM = bpParameters)
+            
+            if (is.character(more_data_table)) {
+              saveRDS(quantData, file.path(more_data_table, "quant_data.rds"))
+            }
+            
             if (!quant) return(quantData)
         }
     }
@@ -299,12 +309,13 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL,
                     countMatrix <- rowSums(countMatrix)
                     incompatibleCountMatrix <- rowSums(metadata(quantData_i)$incompatibleCountMatrix[,j]) # same here
                 }
-                return(bambu.quantify(readClassDt = metadata(quantData_i)$readClassDt, countMatrix = countMatrix, 
-                                            incompatibleCountMatrix = data.table(GENEID.i = as.numeric(rownames(metadata(quantData_i)$incompatibleCountMatrix)), counts = incompatibleCountMatrix),
-                                            txid.index = mcols(annotations)$txid, GENEIDs = GENEIDs.i, isoreParameters = isoreParameters,
-                                            emParameters = emParameters, trackReads = trackReads, 
-                                            verbose = verbose))}, 
-                                            BPPARAM = bpParameters)
+                return(bambu.quantify(readClassDt = metadata(quantData_i)$readClassDt, manual_readClassDt = manual_readClassDt, 
+                                      more_data_table = more_data_table, countMatrix = countMatrix, 
+                                      incompatibleCountMatrix = data.table(GENEID.i = as.numeric(rownames(metadata(quantData_i)$incompatibleCountMatrix)), counts = incompatibleCountMatrix),
+                                      txid.index = mcols(annotations)$txid, GENEIDs = GENEIDs.i, isoreParameters = isoreParameters,
+                                      emParameters = emParameters, trackReads = trackReads, 
+                                      verbose = verbose))}, 
+                                      BPPARAM = bpParameters)
             end.ptm <- proc.time()
             message("Total Time ", round((end.ptm - start.ptm)[3] / 60, 3), " mins.")
             if(!is.null(clusters)){

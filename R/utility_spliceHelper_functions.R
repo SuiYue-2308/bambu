@@ -268,9 +268,18 @@ cutStartEndFromGrangesList <- function(grangesList) {
                             (unlistedExons$exon_endRank == 1 
                             & as.character(strand(unlistedExons)) != "-")))
     
-    start(unlistedExons[startExonsSet]) <- end(unlistedExons[startExonsSet]) - 1
-    end(unlistedExons[endExonsSet]) <- start(unlistedExons[endExonsSet]) + 1
-    
+    start(unlistedExons[startExonsSet]) <- ifelse(
+        width(unlistedExons[startExonsSet]) == 1,
+        end(unlistedExons[startExonsSet]),
+        end(unlistedExons[startExonsSet]) - 1
+    )
+    end(unlistedExons[endExonsSet]) <- ifelse(
+        width(unlistedExons[endExonsSet]) == 1,
+        start(unlistedExons[endExonsSet]),
+        start(unlistedExons[endExonsSet]) + 1
+
+    )
+ 
     return(relist(unlistedExons, partitioning))
 }
 
