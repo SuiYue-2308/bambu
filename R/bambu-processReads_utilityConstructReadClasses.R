@@ -11,7 +11,7 @@
 isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
                                        uniqueJunctions, runName = "sample1",
                                        annotations, stranded = FALSE, verbose = FALSE, 
-                                       junctionCorrection = TRUE) {
+                                       junctionCorrection = TRUE, startEndWindowSize = 35) {
     #split reads into single exon and multi exon reads
     reads.singleExon <- unlist(readGrgList[elementNROWS(readGrgList) == 1],
                                use.names = FALSE)
@@ -32,7 +32,8 @@ isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
             readGrgList = readGrgList,
             annotations = annotations,
             stranded = stranded, 
-            junctionCorrection = junctionCorrection)}
+            junctionCorrection = junctionCorrection,
+            startEndWindowSize = startEndWindowSize)}
     else{exonsByRC.spliced = GRangesList()}
     end.ptm <- proc.time()
     rm(readGrgList, unlisted_junctions, uniqueJunctions)
@@ -60,8 +61,8 @@ isore.constructReadClasses <- function(readGrgList, unlisted_junctions,
 #' @importFrom GenomicRanges match
 #' @noRd
 constructSplicedReadClasses <- function(uniqueJunctions, unlisted_junctions, 
-                                        readGrgList, stranded = FALSE, junctionCorrection = TRUE) {
-                                        readGrgList, annotations, stranded = FALSE, junctionCorrection = TRUE) {
+                                        readGrgList, annotations, stranded = FALSE, junctionCorrection = TRUE,
+                                        startEndWindowSize = 35) {
     options(scipen = 999)
     allToUniqueJunctionMatch <- GenomicRanges::match(unlisted_junctions,
                                                      uniqueJunctions, ignore.strand = TRUE)
@@ -98,7 +99,7 @@ constructSplicedReadClasses <- function(uniqueJunctions, unlisted_junctions,
     rm(lowConfidenceReads, uniqueJunctions, allToUniqueJunctionMatch)
     readTable <- createReadTable(start(unlisted_junctions), 
         end(unlisted_junctions), mcols(unlisted_junctions)$id, readGrgList,
-        readStrand, readConfidence, annotations)
+        readStrand, readConfidence, annotations, startEndWindowSize)
     exonsByReadClass <- createExonsByReadClass(readTable)
     readTable <- readTable %>% dplyr::select(chr.rc = chr, strand.rc = strand,
         startSD = startSD, endSD = endSD, 
@@ -167,7 +168,7 @@ correctReadStrandById <- function(strand, id, stranded = FALSE){
 #'     row_number .groups
 #' @noRd
 createReadTable <- function(unlisted_junctions_start, unlisted_junctions_end, 
-    unlisted_junctions_id, readGrgList,readStrand, readConfidence, annotations) {
+    unlisted_junctions_id, readGrgList,readStrand, readConfidence, annotations, startEndWindowSize) {
     readRanges <- unlist(range(ranges(readGrgList)), use.names = FALSE)
     intronStartCoordinatesInt <- 
         as.integer(min(splitAsList(unlisted_junctions_start,
@@ -200,7 +201,7 @@ createReadTable <- function(unlisted_junctions_start, unlisted_junctions_end,
     rm(readRanges, readStrand, unlisted_junctions_start, 
         unlisted_junctions_end, unlisted_junctions_id, readConfidence, 
         intronStartCoordinatesInt, intronEndCoordinatesInt)
-    readTable <- splitReadClassByStartEnd(readTable, annotations)
+    readTable <- splitReadClassByStartEnd(readTable, annotations, startEndWindowSize)
     ## currently 80%/20% quantile of reads is used to identify start/end sites
     readTable <- readTable %>% 
         group_by(chr, strand, intronEnds, intronStarts, confidenceType, firstExonGroup, lastExonGroup) %>% 

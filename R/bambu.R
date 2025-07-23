@@ -141,7 +141,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
     trackReads = FALSE, returnDistTable = FALSE, lowMemory = FALSE,
     fusionMode = FALSE, verbose = FALSE, demultiplexed = FALSE, spatial = NULL, quantData = NULL,
     sampleNames = NULL, cleanReads = FALSE, dedupUMI = FALSE, barcodesToFilter = NULL, clusters = NULL,
-    processByChromosome = FALSE, processByBam = TRUE, junctionCorrection = TRUE) {
+    processByChromosome = FALSE, processByBam = TRUE, junctionCorrection = TRUE, startEndWindowSize = 35) {
     message(paste0("Running Bambu-v", "3.9.0"))
     if(!is.null(mode)){
         if(mode == "bulk"){
@@ -210,7 +210,7 @@ bambu <- function(reads, annotations = NULL, genome = NULL, NDR = NULL, manual_r
                                                 demultiplexed = demultiplexed,
                                                 sampleNames = sampleNames, cleanReads = cleanReads, 
                                                 dedupUMI = dedupUMI,barcodesToFilter = barcodesToFilter, 
-                                                junctionCorrection = junctionCorrection)
+                                                junctionCorrection = junctionCorrection, startEndWindowSize = startEndWindowSize)
             
             if (is.character(more_data_table)) {
               saveRDS(readClassList, file.path(more_data_table, "read_class_list.rds"))
