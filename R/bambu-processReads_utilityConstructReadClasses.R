@@ -103,7 +103,7 @@ constructSplicedReadClasses <- function(uniqueJunctions, unlisted_junctions,
     exonsByReadClass <- createExonsByReadClass(readTable)
     readTable <- readTable %>% dplyr::select(chr.rc = chr, strand.rc = strand,
         startSD = startSD, endSD = endSD, 
-        firstExonGroup = firstExonGroup, lastExonGroup = lastExonGroup,
+        lastExonGroup = lastExonGroup,
         readCount.posStrand = readCount.posStrand, intronStarts, intronEnds, 
         confidenceType, readCount, readIds, sampleIDs)
     mcols(exonsByReadClass) <- readTable
@@ -204,11 +204,11 @@ createReadTable <- function(unlisted_junctions_start, unlisted_junctions_end,
     readTable <- splitReadClassByStartEnd(readTable, annotations, startEndWindowSize)
     ## currently 80%/20% quantile of reads is used to identify start/end sites
     readTable <- readTable %>% 
-        group_by(chr, strand, intronEnds, intronStarts, confidenceType, firstExonGroup, lastExonGroup) %>% 
+        group_by(chr, strand, intronEnds, intronStarts, confidenceType, lastExonGroup) %>% 
         summarise(readCount = n(), startSD = sd(start), endSD = sd(end),
                 start = nth(x = start, n = ceiling(readCount / 5), order_by = start),
                 end = nth(x = end, n = ceiling(readCount / 1.25), order_by = end), 
-                firstExonGroup = unique(firstExonGroup), lastExonGroup =  unique(lastExonGroup),
+                lastExonGroup =  unique(lastExonGroup),
                 readCount.posStrand = sum(alignmentStrand, na.rm = TRUE), 
                 readIds = list(readId), sampleIDs = list(sampleID),
                 .groups = 'drop') %>% 
