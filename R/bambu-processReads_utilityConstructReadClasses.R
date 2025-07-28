@@ -356,7 +356,8 @@ getUnsplicedReadClassByReference <- function(granges, grangesReference,
     hitsDF <- hitsDF %>% dplyr::select(queryHits, chr, start, end, strand) %>%
       group_by(queryHits, chr, strand) %>%
       summarise(start = max(start), end = min(end), .groups = "drop") %>%
-      group_by(chr, start, end, strand) %>%
+      mutate(tes = ifelse(strand == "+", end, start)) %>%
+      group_by(chr, tes, strand) %>%
       mutate(readClassId = paste0("rc", confidenceType, ".", 
                                   cur_group_id())) %>% ungroup() %>%
       mutate(alignmentStrand = as.character(strand(granges))[queryHits]=="+",
@@ -370,7 +371,7 @@ getUnsplicedReadClassByReference <- function(granges, grangesReference,
             strand, readClassId, alignmentStrand, 
             counts, readId, sampleID) %>%
         group_by(readClassId) %>% 
-        summarise(start = start[1], end = end[1], 
+        summarise(start = min(start), end = min(end), 
             strand = strand[1], chr = chr[1], readCount = sum(counts),
             startSD = sd(rep(readStart,counts)), endSD = sd(rep(readEnd,counts)), 
             readCount.posStrand = sum(rep(alignmentStrand,counts)),
