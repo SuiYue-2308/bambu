@@ -585,11 +585,8 @@ genFilteredAnTable <- function(spliceOverlaps, primarySecondaryDist = 5,
                subjectElementsOutsideMaxDist == 
                min(queryElementsOutsideMaxDist +
                      subjectElementsOutsideMaxDist)) %>% 
-      filter((uniqueStartLengthQuery <= primarySecondaryDistStartEnd &
-                uniqueEndLengthQuery <= primarySecondaryDistStartEnd) ==
-               max(uniqueStartLengthQuery <=
-                     primarySecondaryDistStartEnd & uniqueEndLengthQuery <=
-                     primarySecondaryDistStartEnd)) %>%
+      filter((uniqueEndLengthQuery <= primarySecondaryDistStartEnd) & 
+             (uniqueEndLengthSubject <= primarySecondaryDistStartEnd)) %>%
       mutate(txNumberFiltered = n())
   } else {
     txToAnTableFiltered <- txToAnTable %>%
