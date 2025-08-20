@@ -577,17 +577,7 @@ genFilteredAnTable <- function(spliceOverlaps, primarySecondaryDist = 5,
   }
   ## todo: check filters, what happens to reads with only start and end match?
   if (isFALSE(DistCalculated)) {
-    txToAnTableFiltered <- txToAnTable %>%
-      group_by(queryHits) %>%
-      arrange(queryHits, dist) %>%
-      filter(dist <= (min(dist) + primarySecondaryDist)) %>%
-      filter(queryElementsOutsideMaxDist + 
-               subjectElementsOutsideMaxDist == 
-               min(queryElementsOutsideMaxDist +
-                     subjectElementsOutsideMaxDist)) %>% 
-      filter((uniqueEndLengthQuery <= primarySecondaryDistStartEnd) & 
-             (uniqueEndLengthSubject <= primarySecondaryDistStartEnd)) %>%
-      mutate(txNumberFiltered = n())
+    txToAnTableFiltered <- txToAnTable
   } else {
     txToAnTableFiltered <- txToAnTable %>%
       group_by(queryHits) %>%
