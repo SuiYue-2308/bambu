@@ -191,7 +191,11 @@ bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations, more
     } else {
         mcols(readGrgList)$sampleID <- index
     }
-        
+    
+    if (is.character(more_data_table)) {
+      saveRDS(readGrgList, file.path(more_data_table, 'read_grg_list.rds')) 
+    }
+
     # construct read classes for each chromosome seperately 
     if(processByChromosome){
         se <- lowMemoryConstructReadClasses(readGrgList, genomeSequence, annotations, 
@@ -226,10 +230,6 @@ bambu.processReadsByFile <- function(bam.file, genomeSequence, annotations, more
     metadata(se)$samples <- names(bam.file)[1]
     metadata(se)$sampleNames <- names(bam.file)[1]
     if(!isFALSE(demultiplexed)) metadata(se)$samples <- levels(mcols(readGrgList)$BC)     
-    
-    if (is.character(more_data_table)) {
-      saveRDS(readGrgList, file.path(more_data_table, 'read_grg_list.rds')) 
-    }
     
     return(se)
 }
